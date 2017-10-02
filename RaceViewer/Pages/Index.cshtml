@@ -1,0 +1,66 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div id="map"></div>
+<script>
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 6,
+            center: {
+                lat: 50.5,
+                lng: -4.0
+            }
+        });
+
+        // request list of stores from web api
+        var request = new XMLHttpRequest();
+        request.open('GET', '/races', true);
+
+        var infowindow = new google.maps.InfoWindow({
+            content: 'temp'
+        });
+
+        request.onload = function () {
+
+            if (request.status >= 200 && request.status < 400) {
+                // Success!
+                var races = JSON.parse(request.responseText);
+
+                for (var i = 0; i < races.length; i++) {
+                    var race = races[i];
+                    var latLng = new google.maps.LatLng(race.latitude, race.longitude);
+
+                    var contentString = `<h5>${race.name}</h5>` +
+                        (race.website ? `<p><a href="${race.website}" target="_blank">${race.website}</a></p>` : '') +
+                        `<p><strong>Date</strong>: ${race.dates}</p>` +
+                        `<p><strong>Medal</strong>: ${race.medal}</p>` +
+                        `<p><strong>Cost</strong>: ${race.cost}</p>`;
+                    
+                    addMarkerWithInfowindow(map, latLng, contentString, race.name);
+                }
+            }
+        };
+        request.send();
+
+        function addMarkerWithInfowindow(map, marker_position, infowindow_content, title) {
+            var myLatlng, marker, contentString;
+            marker = new google.maps.Marker({
+                position: marker_position,
+                map: map,
+                title: title
+            });
+            contentString = infowindow_content;
+
+            marker.addListener('click', function () {
+                infowindow.setContent(contentString);
+                infowindow.open(map, marker);
+            });
+        }
+    }
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?callback=initMap&key=AIzaSyBvpvLFiy_9zE43kzwscMeiPQZX8snEDTI">
+</script>
